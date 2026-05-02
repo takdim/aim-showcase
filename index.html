@@ -552,16 +552,39 @@
     }
 
     .project-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      perspective: 1200px;
+      cursor: pointer;
+      min-height: 340px;
+      background: transparent;
+      border: none;
+      padding: 0;
+      overflow: visible;
+    }
+    .project-card.hidden { display: none; }
+
+    .card-inner {
+      position: relative;
+      width: 100%; min-height: 340px;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .project-card.flipped .card-inner { transform: rotateY(180deg); }
+
+    .card-front, .card-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
       border-radius: var(--radius);
       padding: 1.75rem;
-      transition: all var(--transition);
       display: flex; flex-direction: column;
-      position: relative;
+      border: 1px solid var(--border);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .card-front {
+      background: var(--card-bg);
       overflow: hidden;
     }
-    .project-card::before {
+    .card-front::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0;
       height: 2px;
@@ -569,15 +592,43 @@
       transform: scaleX(0);
       transition: transform var(--transition);
     }
-    .project-card:hover {
+    .project-card:hover .card-front::before { transform: scaleX(1); }
+    .project-card:hover .card-front {
       border-color: var(--accent);
-      transform: translateY(-6px);
-      box-shadow: 0 20px 48px rgba(56, 189, 248, 0.08);
+      box-shadow: 0 20px 48px rgba(56, 189, 248, 0.1);
     }
-    .project-card:hover::before { transform: scaleX(1); }
-
-    .project-card.hidden {
-      display: none;
+    .card-back {
+      background: linear-gradient(135deg, var(--bg3) 0%, #1a2030 100%);
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: rotateY(180deg);
+    }
+    .card-back-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem;
+    }
+    .card-back h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .card-back-org {
+      font-size: 0.78rem; color: var(--accent);
+      font-family: 'Fira Code', monospace; margin-bottom: 1rem;
+    }
+    .card-back-list { list-style: none; margin-bottom: 1rem; flex: 1; }
+    .card-back-list li {
+      font-size: 0.84rem; color: var(--muted);
+      padding: 3px 0 3px 1.1rem; position: relative;
+    }
+    .card-back-list li::before { content: '▹'; position: absolute; left: 0; color: var(--accent); }
+    .card-back-stack { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+    .card-back-stack span {
+      padding: 3px 10px;
+      background: rgba(56, 189, 248, 0.07);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 6px; font-size: 0.73rem;
+      color: var(--accent); font-family: 'Fira Code', monospace;
+    }
+    .flip-hint {
+      font-size: 0.71rem; color: var(--muted);
+      font-family: 'Fira Code', monospace;
+      text-align: right; margin-top: auto; opacity: 0.55;
     }
 
     .project-header {
@@ -712,9 +763,63 @@
       section { padding: 4rem 1.25rem; }
       .projects-grid { grid-template-columns: 1fr; }
     }
+
+    /* ===================== CUSTOM CURSOR ===================== */
+    @media (hover: hover) { body { cursor: none; } }
+    @media (hover: none) { .cursor-dot, .cursor-ring { display: none; } }
+    .cursor-dot {
+      position: fixed; width: 7px; height: 7px;
+      background: var(--accent); border-radius: 50%;
+      pointer-events: none; z-index: 99999;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s, height 0.25s, background 0.25s;
+    }
+    .cursor-ring {
+      position: fixed; width: 34px; height: 34px;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      border-radius: 50%; pointer-events: none; z-index: 99998;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s, height 0.25s, border-color 0.25s, background 0.25s;
+    }
+    .cursor-dot.hovered { width: 12px; height: 12px; background: var(--accent2); }
+    .cursor-ring.hovered { width: 52px; height: 52px; border-color: var(--accent2); background: rgba(129,140,248,0.05); }
+
+    /* ===================== SCROLL PROGRESS ===================== */
+    .scroll-progress {
+      position: fixed; top: 0; left: 0;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--green));
+      z-index: 9999;
+      transition: width 0.08s linear;
+    }
+
+    /* ===================== BURST PARTICLE ===================== */
+    @keyframes burstOut {
+      0%   { opacity: 1; transform: translate(-50%,-50%) scale(0); }
+      40%  { opacity: 1; transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty) * 0.5)) scale(1); }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.7); }
+    }
+
+    /* ===================== GLITCH ===================== */
+    .hero-name:hover { animation: glitchShake 0.28s linear; }
+    @keyframes glitchShake {
+      0%   { transform: translate(0); }
+      20%  { transform: translate(-2px, 1px); filter: hue-rotate(40deg); }
+      40%  { transform: translate(2px, -1px); filter: hue-rotate(-40deg); }
+      60%  { transform: translate(-1px, 2px); }
+      80%  { transform: translate(1px, -2px); filter: hue-rotate(20deg); }
+      100% { transform: translate(0); filter: none; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- CURSOR -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="scroll-progress" id="scrollProgress"></div>
 
   <!-- NAV -->
   <nav id="navbar">
@@ -918,148 +1023,238 @@
 
         <!-- QA -->
         <div class="project-card reveal delay-1" data-category="qa">
-          <div class="project-header">
-            <span class="project-icon">💊</span>
-            <span class="project-category cat-qa">QA</span>
-          </div>
-          <h3 class="project-title">SIFA</h3>
-          <p class="project-subtitle">Sistem Informasi Farmasi UNHAS</p>
-          <p class="project-desc">Pharmacy information system for Hasanuddin University. Responsible for end-to-end QA testing including functional, regression, and API testing to ensure system reliability.</p>
-          <div class="project-tags">
-            <span class="project-tag">Selenium</span>
-            <span class="project-tag">Postman</span>
-            <span class="project-tag">Manual Testing</span>
-            <span class="project-tag">CV. NPE Digital</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">💊</span><span class="project-category cat-qa">QA</span></div>
+              <h3 class="project-title">SIFA</h3>
+              <p class="project-subtitle">Sistem Informasi Farmasi UNHAS</p>
+              <p class="project-desc">Pharmacy information system for Hasanuddin University. End-to-end QA testing including functional, regression, and API testing.</p>
+              <div class="project-tags"><span class="project-tag">Selenium</span><span class="project-tag">Postman</span><span class="project-tag">Manual Testing</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-qa">QA</span><span style="font-size:2rem">💊</span></div>
+              <h3>SIFA</h3>
+              <p class="card-back-org">📍 CV. NPE DIGITAL</p>
+              <ul class="card-back-list">
+                <li>End-to-end functional testing</li>
+                <li>Regression &amp; API testing (Postman)</li>
+                <li>Bug reporting &amp; documentation</li>
+                <li>Cross-browser compatibility</li>
+              </ul>
+              <div class="card-back-stack"><span>Selenium</span><span>Postman</span><span>Manual Testing</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-2" data-category="qa">
-          <div class="project-header">
-            <span class="project-icon">📓</span>
-            <span class="project-category cat-qa">QA</span>
-          </div>
-          <h3 class="project-title">E-Logbook</h3>
-          <p class="project-subtitle">Pencatatan Aktivitas Mahasiswa Digital</p>
-          <p class="project-desc">Digital logbook system for recording student activities. Performed comprehensive testing across web and mobile platforms to validate data entry workflows and reporting features.</p>
-          <div class="project-tags">
-            <span class="project-tag">Selenium</span>
-            <span class="project-tag">Postman</span>
-            <span class="project-tag">API Testing</span>
-            <span class="project-tag">CV. NPE Digital</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">📓</span><span class="project-category cat-qa">QA</span></div>
+              <h3 class="project-title">E-Logbook</h3>
+              <p class="project-subtitle">Pencatatan Aktivitas Mahasiswa Digital</p>
+              <p class="project-desc">Digital logbook for student activities. Comprehensive testing across web and mobile platforms for data entry workflows and reporting.</p>
+              <div class="project-tags"><span class="project-tag">Selenium</span><span class="project-tag">Postman</span><span class="project-tag">API Testing</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-qa">QA</span><span style="font-size:2rem">📓</span></div>
+              <h3>E-Logbook</h3>
+              <p class="card-back-org">📍 CV. NPE DIGITAL</p>
+              <ul class="card-back-list">
+                <li>Web &amp; mobile platform testing</li>
+                <li>Data entry workflow validation</li>
+                <li>API endpoint testing</li>
+                <li>Reporting feature QA</li>
+              </ul>
+              <div class="card-back-stack"><span>Selenium</span><span>Postman</span><span>API Testing</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-3" data-category="qa">
-          <div class="project-header">
-            <span class="project-icon">🧂</span>
-            <span class="project-category cat-qa">QA</span>
-          </div>
-          <h3 class="project-title">GaramQu</h3>
-          <p class="project-subtitle">Manajemen Produk Garam</p>
-          <p class="project-desc">Salt product management system. Ensured data integrity, tested inventory workflows, and validated reporting modules through systematic functional and regression testing.</p>
-          <div class="project-tags">
-            <span class="project-tag">Selenium</span>
-            <span class="project-tag">Postman</span>
-            <span class="project-tag">Regression Testing</span>
-            <span class="project-tag">CV. NPE Digital</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">🧂</span><span class="project-category cat-qa">QA</span></div>
+              <h3 class="project-title">GaramQu</h3>
+              <p class="project-subtitle">Manajemen Produk Garam</p>
+              <p class="project-desc">Salt product management system. Ensured data integrity and validated reporting modules through systematic regression testing.</p>
+              <div class="project-tags"><span class="project-tag">Selenium</span><span class="project-tag">Postman</span><span class="project-tag">Regression</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-qa">QA</span><span style="font-size:2rem">🧂</span></div>
+              <h3>GaramQu</h3>
+              <p class="card-back-org">📍 CV. NPE DIGITAL</p>
+              <ul class="card-back-list">
+                <li>Inventory workflow testing</li>
+                <li>Data integrity validation</li>
+                <li>Regression test suites</li>
+                <li>Reporting module QA</li>
+              </ul>
+              <div class="card-back-stack"><span>Selenium</span><span>Postman</span><span>Regression</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <!-- WEB -->
         <div class="project-card reveal delay-1" data-category="web">
-          <div class="project-header">
-            <span class="project-icon">📚</span>
-            <span class="project-category cat-web">Web</span>
-          </div>
-          <h3 class="project-title">Baper Digital</h3>
-          <p class="project-subtitle">Platform Pembelajaran Digital Perpustakaan</p>
-          <p class="project-desc">Digital learning platform for new students to understand library services and support academic writing. Designed to ease the onboarding process for university freshmen.</p>
-          <div class="project-tags">
-            <span class="project-tag">Python</span>
-            <span class="project-tag">Flask</span>
-            <span class="project-tag">MySQL</span>
-            <span class="project-tag">HTML/CSS</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">📚</span><span class="project-category cat-web">Web</span></div>
+              <h3 class="project-title">Baper Digital</h3>
+              <p class="project-subtitle">Platform Pembelajaran Digital Perpustakaan</p>
+              <p class="project-desc">Digital learning platform for new students to understand library services and support academic writing.</p>
+              <div class="project-tags"><span class="project-tag">Python</span><span class="project-tag">Flask</span><span class="project-tag">MySQL</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-web">Web</span><span style="font-size:2rem">📚</span></div>
+              <h3>Baper Digital</h3>
+              <p class="card-back-org">🌐 baper.aaaiiimmm.dev</p>
+              <ul class="card-back-list">
+                <li>Student onboarding e-learning</li>
+                <li>Library service modules</li>
+                <li>Academic writing support</li>
+                <li>Admin &amp; user management</li>
+              </ul>
+              <div class="card-back-stack"><span>Python</span><span>Flask</span><span>MySQL</span><span>HTML/CSS</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-2" data-category="web">
-          <div class="project-header">
-            <span class="project-icon">🏢</span>
-            <span class="project-category cat-web">Web</span>
-          </div>
-          <h3 class="project-title">Carelroom</h3>
-          <p class="project-subtitle">App Booking Ruangan CAREL</p>
-          <p class="project-desc">Room booking application for CAREL facility. Features real-time room availability, reservation management, and admin dashboard for managing bookings efficiently.</p>
-          <div class="project-tags">
-            <span class="project-tag">Python</span>
-            <span class="project-tag">Flask</span>
-            <span class="project-tag">MySQL</span>
-            <span class="project-tag">Bootstrap</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">🏢</span><span class="project-category cat-web">Web</span></div>
+              <h3 class="project-title">Carelroom</h3>
+              <p class="project-subtitle">App Booking Ruangan CAREL</p>
+              <p class="project-desc">Room booking app for CAREL facility with real-time availability, reservation management, and admin dashboard.</p>
+              <div class="project-tags"><span class="project-tag">Python</span><span class="project-tag">Flask</span><span class="project-tag">MySQL</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-web">Web</span><span style="font-size:2rem">🏢</span></div>
+              <h3>Carelroom</h3>
+              <p class="card-back-org">🌐 Web Application</p>
+              <ul class="card-back-list">
+                <li>Real-time room availability</li>
+                <li>Reservation management</li>
+                <li>Admin dashboard</li>
+                <li>Booking history &amp; reports</li>
+              </ul>
+              <div class="card-back-stack"><span>Python</span><span>Flask</span><span>MySQL</span><span>Bootstrap</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-3" data-category="web">
-          <div class="project-header">
-            <span class="project-icon">📖</span>
-            <span class="project-category cat-web">Web</span>
-          </div>
-          <h3 class="project-title">SLIMS9 Flask</h3>
-          <p class="project-subtitle">Library Management System — Web Version</p>
-          <p class="project-desc">Flask-based port of the SLiMS9 (Senayan Library Management System) featuring catalog management, member management, and book circulation with a modernized interface.</p>
-          <div class="project-tags">
-            <span class="project-tag">Python</span>
-            <span class="project-tag">Flask</span>
-            <span class="project-tag">MySQL</span>
-            <span class="project-tag">SLiMS9</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">📖</span><span class="project-category cat-web">Web</span></div>
+              <h3 class="project-title">SLIMS9 Flask</h3>
+              <p class="project-subtitle">Library Management System — Web Version</p>
+              <p class="project-desc">Flask-based port of SLiMS9 with catalog, member management, and book circulation with a modernized interface.</p>
+              <div class="project-tags"><span class="project-tag">Python</span><span class="project-tag">Flask</span><span class="project-tag">MySQL</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-web">Web</span><span style="font-size:2rem">📖</span></div>
+              <h3>SLIMS9 Flask</h3>
+              <p class="card-back-org">🌐 Web Application</p>
+              <ul class="card-back-list">
+                <li>Catalog management</li>
+                <li>Member &amp; loan management</li>
+                <li>Book circulation tracking</li>
+                <li>Modernized SLiMS9 UI</li>
+              </ul>
+              <div class="card-back-stack"><span>Python</span><span>Flask</span><span>MySQL</span><span>SLiMS9</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <!-- MOBILE -->
         <div class="project-card reveal delay-1" data-category="mobile">
-          <div class="project-header">
-            <span class="project-icon">📱</span>
-            <span class="project-category cat-mobile">Mobile</span>
-          </div>
-          <h3 class="project-title">SLIMS9 Mobile</h3>
-          <p class="project-subtitle">Library Management System — Mobile Version</p>
-          <p class="project-desc">Android mobile companion app for SLIMS9, allowing library members to search catalog, check borrowing history, and receive book return reminders on-the-go.</p>
-          <div class="project-tags">
-            <span class="project-tag">Java</span>
-            <span class="project-tag">Android</span>
-            <span class="project-tag">REST API</span>
-            <span class="project-tag">SLiMS9</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">📱</span><span class="project-category cat-mobile">Mobile</span></div>
+              <h3 class="project-title">SLIMS9 Mobile</h3>
+              <p class="project-subtitle">Library Management System — Mobile Version</p>
+              <p class="project-desc">Android companion app for SLIMS9 — search catalog, check borrowing history, and get return reminders on-the-go.</p>
+              <div class="project-tags"><span class="project-tag">Java</span><span class="project-tag">Android</span><span class="project-tag">REST API</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-mobile">Mobile</span><span style="font-size:2rem">📱</span></div>
+              <h3>SLIMS9 Mobile</h3>
+              <p class="card-back-org">📱 Android Application</p>
+              <ul class="card-back-list">
+                <li>Catalog search &amp; browse</li>
+                <li>Borrowing history tracker</li>
+                <li>Book return reminders</li>
+                <li>REST API integration</li>
+              </ul>
+              <div class="card-back-stack"><span>Java</span><span>Android</span><span>REST API</span><span>SLiMS9</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-2" data-category="mobile">
-          <div class="project-header">
-            <span class="project-icon">🌱</span>
-            <span class="project-category cat-mobile">Mobile</span>
-          </div>
-          <h3 class="project-title">Ciluhise</h3>
-          <p class="project-subtitle">App Literasi Lingkungan Sehat untuk Anak SD</p>
-          <p class="project-desc">Fun and interactive literacy app for elementary school students about healthy environment awareness. Features engaging content with gamification elements to encourage eco-friendly habits.</p>
-          <div class="project-tags">
-            <span class="project-tag">Java</span>
-            <span class="project-tag">Android</span>
-            <span class="project-tag">Gamification</span>
-            <span class="project-tag">Education</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">🌱</span><span class="project-category cat-mobile">Mobile</span></div>
+              <h3 class="project-title">Ciluhise</h3>
+              <p class="project-subtitle">App Literasi Lingkungan Sehat untuk Anak SD</p>
+              <p class="project-desc">Interactive literacy app for elementary students about healthy environment, with gamification to encourage eco-friendly habits.</p>
+              <div class="project-tags"><span class="project-tag">Java</span><span class="project-tag">Android</span><span class="project-tag">Gamification</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-mobile">Mobile</span><span style="font-size:2rem">🌱</span></div>
+              <h3>Ciluhise</h3>
+              <p class="card-back-org">📱 Android Application</p>
+              <ul class="card-back-list">
+                <li>Interactive literacy content</li>
+                <li>Gamification &amp; rewards</li>
+                <li>Eco-friendly habit tracking</li>
+                <li>Kid-friendly UI/UX</li>
+              </ul>
+              <div class="card-back-stack"><span>Java</span><span>Android</span><span>Gamification</span><span>Education</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
         <div class="project-card reveal delay-3" data-category="mobile">
-          <div class="project-header">
-            <span class="project-icon">🌿</span>
-            <span class="project-category cat-mobile">Mobile</span>
-          </div>
-          <h3 class="project-title">Kelor Monitoring</h3>
-          <p class="project-subtitle">Pemantauan &amp; Kendali Alat Daun Kelor</p>
-          <p class="project-desc">IoT-based monitoring and control app for the moringa leaf processing machine — from raw leaves to powder. Enables real-time monitoring and remote control of the processing stages.</p>
-          <div class="project-tags">
-            <span class="project-tag">Java</span>
-            <span class="project-tag">Android</span>
-            <span class="project-tag">IoT</span>
-            <span class="project-tag">MQTT</span>
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="project-header"><span class="project-icon">🌿</span><span class="project-category cat-mobile">Mobile</span></div>
+              <h3 class="project-title">Kelor Monitoring</h3>
+              <p class="project-subtitle">Pemantauan &amp; Kendali Alat Daun Kelor</p>
+              <p class="project-desc">IoT-based app for monitoring moringa leaf processing — raw leaves to powder, with real-time remote control.</p>
+              <div class="project-tags"><span class="project-tag">Java</span><span class="project-tag">Android</span><span class="project-tag">IoT</span></div>
+              <span class="flip-hint">↻ click to flip</span>
+            </div>
+            <div class="card-back">
+              <div class="card-back-top"><span class="project-category cat-mobile">Mobile</span><span style="font-size:2rem">🌿</span></div>
+              <h3>Kelor Monitoring</h3>
+              <p class="card-back-org">📱 IoT Android App</p>
+              <ul class="card-back-list">
+                <li>Real-time process monitoring</li>
+                <li>Remote machine control</li>
+                <li>Leaf-to-powder stage tracking</li>
+                <li>MQTT data communication</li>
+              </ul>
+              <div class="card-back-stack"><span>Java</span><span>Android</span><span>IoT</span><span>MQTT</span></div>
+              <span class="flip-hint">↺ click to flip back</span>
+            </div>
           </div>
         </div>
 
@@ -1293,18 +1488,140 @@
         filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const filter = btn.dataset.filter;
-
-        projectCards.forEach((card, i) => {
+        let visibleIndex = 0;
+        projectCards.forEach(card => {
           const match = filter === 'all' || card.dataset.category === filter;
           if (match) {
             card.classList.remove('hidden');
-            card.style.animation = `fadeUp 0.4s ${i * 0.05}s ease both`;
+            card.style.animation = `fadeUp 0.4s ${visibleIndex * 0.06}s ease both`;
+            visibleIndex++;
           } else {
             card.classList.add('hidden');
+            card.classList.remove('flipped');
           }
         });
       });
     });
+
+    // ===================== SCROLL PROGRESS =====================
+    const scrollProgressEl = document.getElementById('scrollProgress');
+    window.addEventListener('scroll', () => {
+      const total = document.body.scrollHeight - window.innerHeight;
+      if (total > 0) scrollProgressEl.style.width = (window.scrollY / total * 100) + '%';
+    }, { passive: true });
+
+    // ===================== CUSTOM CURSOR =====================
+    (function() {
+      const dot = document.getElementById('cursorDot');
+      const ring = document.getElementById('cursorRing');
+      if (!dot || !ring) return;
+      let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+      let rx = mx, ry = my;
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+      }, { passive: true });
+      (function animateRing() {
+        rx += (mx - rx) * 0.11;
+        ry += (my - ry) * 0.11;
+        ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+        requestAnimationFrame(animateRing);
+      })();
+      document.querySelectorAll('a, button, .project-card, .skill-card, .contact-link, .filter-btn').forEach(el => {
+        el.addEventListener('mouseenter', () => { dot.classList.add('hovered'); ring.classList.add('hovered'); });
+        el.addEventListener('mouseleave', () => { dot.classList.remove('hovered'); ring.classList.remove('hovered'); });
+      });
+    })();
+
+    // ===================== HERO PARALLAX =====================
+    (function() {
+      const heroSection = document.getElementById('hero');
+      const heroContent = document.querySelector('.hero-content');
+      if (!heroSection || !heroContent) return;
+      heroSection.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 18;
+        const y = (e.clientY / window.innerHeight - 0.5) * 18;
+        heroContent.style.transform = `translate(${x * 0.28}px, ${y * 0.28}px)`;
+      }, { passive: true });
+      heroSection.addEventListener('mouseleave', () => { heroContent.style.transform = ''; });
+    })();
+
+    // ===================== MAGNETIC BUTTONS =====================
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        const x = (e.clientX - r.left - r.width / 2) * 0.2;
+        const y = (e.clientY - r.top - r.height / 2) * 0.2;
+        btn.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+    });
+
+    // ===================== 3D CARD TILT + FLIP =====================
+    document.querySelectorAll('.project-card').forEach(card => {
+      const inner = card.querySelector('.card-inner');
+      card.addEventListener('mousemove', e => {
+        if (card.classList.contains('flipped')) return;
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        inner.style.transition = 'transform 0.08s ease';
+        inner.style.transform = `rotateX(${y * -10}deg) rotateY(${x * 10}deg)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        if (card.classList.contains('flipped')) return;
+        inner.style.transition = 'transform 0.6s ease';
+        inner.style.transform = '';
+      });
+      card.addEventListener('click', () => {
+        inner.style.transition = 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+        inner.style.transform = '';
+        card.classList.toggle('flipped');
+      });
+    });
+
+    // ===================== SKILL BURST =====================
+    const burstTags = ['Python','Flask','Java','MySQL','Selenium','Postman','QA','Android','API','Testing','Bug Hunt','IoT'];
+    document.querySelectorAll('.skill-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        for (let i = 0; i < 7; i++) {
+          const p = document.createElement('span');
+          p.textContent = burstTags[Math.floor(Math.random() * burstTags.length)];
+          const angle = (i / 7) * Math.PI * 2 - Math.PI / 2;
+          const dist = 55 + Math.random() * 40;
+          const tx = Math.cos(angle) * dist;
+          const ty = Math.sin(angle) * dist;
+          p.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:9998;font-size:0.68rem;font-family:'Fira Code',monospace;color:var(--accent);background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);padding:2px 8px;border-radius:100px;white-space:nowrap;--tx:${tx}px;--ty:${ty}px;animation:burstOut 0.75s ease forwards;animation-delay:${i * 45}ms;`;
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 900);
+        }
+      });
+    });
+
+    // ===================== COUNT UP STATS =====================
+    (function() {
+      const statsEl = document.querySelector('.about-stats');
+      if (!statsEl) return;
+      new IntersectionObserver(entries => {
+        if (!entries[0].isIntersecting) return;
+        statsEl.querySelectorAll('.stat-value').forEach(sv => {
+          const n = parseFloat(sv.textContent);
+          if (isNaN(n)) return;
+          const isFloat = !Number.isInteger(n);
+          const suffix = sv.textContent.includes('+') ? '+' : '';
+          const start = performance.now();
+          (function tick(now) {
+            const t = Math.min((now - start) / 1400, 1);
+            const ease = 1 - Math.pow(1 - t, 3);
+            sv.textContent = isFloat ? (ease * n).toFixed(2) : Math.floor(ease * n) + suffix;
+            if (t < 1) requestAnimationFrame(tick);
+          })(start);
+        });
+      }, { threshold: 0.6 }).observe(statsEl);
+    })();
   </script>
 </body>
 </html>
